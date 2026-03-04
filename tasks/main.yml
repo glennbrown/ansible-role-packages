@@ -21,7 +21,9 @@
   loop:
     - key: "{{ ansible_facts.pkg_mgr }}_base_packages"
       value: >-
-        {{ vars[ansible_facts.pkg_mgr + '_base_packages'] | default([]) }}
+        {{ lookup('vars',
+        ansible_facts.pkg_mgr + '_base_packages',
+        default=[]) }}
     - key: package_list
       value: "{{ package_list }}"
     - key: package_list_group
@@ -35,7 +37,7 @@
   ansible.builtin.set_fact:
     packages_combined: >-
       {{
-        (vars[ansible_facts.pkg_mgr + '_base_packages'] | default([]))
+        (lookup('vars', ansible_facts.pkg_mgr + '_base_packages', default=[]))
         + package_list
         + package_list_group
         + package_list_host
