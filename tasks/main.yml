@@ -2,11 +2,11 @@
 - name: Validate package manager is supported
   ansible.builtin.assert:
     that:
-      - ansible_pkg_mgr in packages_supported_managers
+      - ansible_facts.pkg_mgr in packages_supported_managers
     fail_msg: >-
-      Package manager '{{ ansible_pkg_mgr }}' is not supported.
+      Package manager '{{ ansible_facts.pkg_mgr }}' is not supported.
       Supported managers: {{ packages_supported_managers | join(', ') }}
-    success_msg: "Package manager '{{ ansible_pkg_mgr }}' is supported."
+    success_msg: "Package manager '{{ ansible_facts.pkg_mgr }}' is supported."
 
 - name: Validate package list variables are lists
   ansible.builtin.assert:
@@ -19,8 +19,9 @@
       got: {{ item.value | type_debug }}
     success_msg: "Variable '{{ item.key }}' is a valid list."
   loop:
-    - key: "{{ ansible_pkg_mgr }}_base_packages"
-      value: "{{ vars[ansible_pkg_mgr + '_base_packages'] | default([]) }}"
+    - key: "{{ ansible_facts.pkg_mgr }}_base_packages"
+      value: >-
+        {{ vars[ansible_facts.pkg_mgr + '_base_packages'] | default([]) }}
     - key: package_list
       value: "{{ package_list }}"
     - key: package_list_group
@@ -34,7 +35,7 @@
   ansible.builtin.set_fact:
     packages_combined: >-
       {{
-        (vars[ansible_pkg_mgr + '_base_packages'] | default([]))
+        (vars[ansible_facts.pkg_mgr + '_base_packages'] | default([]))
         + package_list
         + package_list_group
         + package_list_host
@@ -45,7 +46,7 @@
 - name: Log packages to install
   ansible.builtin.debug:
     msg: >-
-      Packages to install via {{ ansible_pkg_mgr }}:
+      Packages to install via {{ ansible_facts.pkg_mgr }}:
       {{ packages_combined }}
   when: packages_combined | length > 0
 
@@ -54,6 +55,6 @@
     msg: "No packages specified for installation."
   when: packages_combined | length == 0
 
-- name: Install packages using {{ ansible_pkg_mgr }}
-  ansible.builtin.include_tasks: "{{ ansible_pkg_mgr }}.yml"
+- name: Install packages using {{ ansible_facts.pkg_mgr }}
+  ansible.builtin.include_tasks: "{{ ansible_facts.pkg_mgr }}.yml"
   when: packages_combined | length > 0
