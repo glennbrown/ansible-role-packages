@@ -1,0 +1,8 @@
+---
+apt_base_packages: []
+dnf_base_packages: []
+zypper_base_packages: []
+pacman_base_packages: []
+package_list: []
+package_list_group: []
+package_list_host: []

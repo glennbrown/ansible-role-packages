@@ -1,0 +1,35 @@
+---
+- name: Install packages via pacman
+  block:
+    - name: Update pacman database
+      community.general.pacman:
+        update_cache: true
+
+    - name: Install packages
+      community.general.pacman:
+        name: "{{ packages_combined }}"
+        state: present
+      register: pacman_install_result
+
+  rescue:
+    - name: Log pacman installation failure
+      ansible.builtin.debug:
+        msg: >-
+          Failed to install packages via pacman.
+          Packages: {{ packages_combined }}.
+          Error: {{ ansible_failed_result.msg | default('unknown error') }}
+
+    - name: Re-raise pacman installation failure
+      ansible.builtin.fail:
+        msg: >-
+          pacman package installation failed.
+          See previous debug output for details.
+
+  always:
+    - name: Log pacman installation result
+      ansible.builtin.debug:
+        msg: >-
+          pacman installation
+          {{ 'changed' if pacman_install_result.changed
+          else 'unchanged (already installed)' }}.
+      when: pacman_install_result is defined

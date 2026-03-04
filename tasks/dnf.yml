@@ -1,0 +1,31 @@
+---
+- name: Install packages via dnf
+  block:
+    - name: Install packages
+      ansible.builtin.dnf:
+        name: "{{ packages_combined }}"
+        state: present
+      register: dnf_install_result
+
+  rescue:
+    - name: Log dnf installation failure
+      ansible.builtin.debug:
+        msg: >-
+          Failed to install packages via dnf.
+          Packages: {{ packages_combined }}.
+          Error: {{ ansible_failed_result.msg | default('unknown error') }}
+
+    - name: Re-raise dnf installation failure
+      ansible.builtin.fail:
+        msg: >-
+          dnf package installation failed.
+          See previous debug output for details.
+
+  always:
+    - name: Log dnf installation result
+      ansible.builtin.debug:
+        msg: >-
+          dnf installation
+          {{ 'changed' if dnf_install_result.changed
+          else 'unchanged (already installed)' }}.
+      when: dnf_install_result is defined

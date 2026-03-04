@@ -1,0 +1,31 @@
+---
+- name: Install packages via zypper
+  block:
+    - name: Install packages
+      community.general.zypper:
+        name: "{{ packages_combined }}"
+        state: present
+      register: zypper_install_result
+
+  rescue:
+    - name: Log zypper installation failure
+      ansible.builtin.debug:
+        msg: >-
+          Failed to install packages via zypper.
+          Packages: {{ packages_combined }}.
+          Error: {{ ansible_failed_result.msg | default('unknown error') }}
+
+    - name: Re-raise zypper installation failure
+      ansible.builtin.fail:
+        msg: >-
+          zypper package installation failed.
+          See previous debug output for details.
+
+  always:
+    - name: Log zypper installation result
+      ansible.builtin.debug:
+        msg: >-
+          zypper installation
+          {{ 'changed' if zypper_install_result.changed
+          else 'unchanged (already installed)' }}.
+      when: zypper_install_result is defined

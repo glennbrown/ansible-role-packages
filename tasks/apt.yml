@@ -1,0 +1,36 @@
+---
+- name: Install packages via apt
+  block:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name: "{{ packages_combined }}"
+        state: present
+      register: apt_install_result
+
+  rescue:
+    - name: Log apt installation failure
+      ansible.builtin.debug:
+        msg: >-
+          Failed to install packages via apt.
+          Packages: {{ packages_combined }}.
+          Error: {{ ansible_failed_result.msg | default('unknown error') }}
+
+    - name: Re-raise apt installation failure
+      ansible.builtin.fail:
+        msg: >-
+          apt package installation failed.
+          See previous debug output for details.
+
+  always:
+    - name: Log apt installation result
+      ansible.builtin.debug:
+        msg: >-
+          apt installation
+          {{ 'changed' if apt_install_result.changed
+          else 'unchanged (already installed)' }}.
+      when: apt_install_result is defined

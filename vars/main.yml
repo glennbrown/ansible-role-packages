@@ -1,0 +1,6 @@
+---
+packages_supported_managers:
+  - apt
+  - dnf
+  - zypper
+  - pacman

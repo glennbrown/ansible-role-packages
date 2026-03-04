@@ -1,0 +1,59 @@
+---
+- name: Validate package manager is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_pkg_mgr in packages_supported_managers
+    fail_msg: >-
+      Package manager '{{ ansible_pkg_mgr }}' is not supported.
+      Supported managers: {{ packages_supported_managers | join(', ') }}
+    success_msg: "Package manager '{{ ansible_pkg_mgr }}' is supported."
+
+- name: Validate package list variables are lists
+  ansible.builtin.assert:
+    that:
+      - item.value is sequence
+      - item.value is not string
+      - item.value is not mapping
+    fail_msg: >-
+      Variable '{{ item.key }}' must be a list,
+      got: {{ item.value | type_debug }}
+    success_msg: "Variable '{{ item.key }}' is a valid list."
+  loop:
+    - key: "{{ ansible_pkg_mgr }}_base_packages"
+      value: "{{ vars[ansible_pkg_mgr + '_base_packages'] | default([]) }}"
+    - key: package_list
+      value: "{{ package_list }}"
+    - key: package_list_group
+      value: "{{ package_list_group }}"
+    - key: package_list_host
+      value: "{{ package_list_host }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Combine package lists
+  ansible.builtin.set_fact:
+    packages_combined: >-
+      {{
+        (vars[ansible_pkg_mgr + '_base_packages'] | default([]))
+        + package_list
+        + package_list_group
+        + package_list_host
+        | unique
+        | list
+      }}
+
+- name: Log packages to install
+  ansible.builtin.debug:
+    msg: >-
+      Packages to install via {{ ansible_pkg_mgr }}:
+      {{ packages_combined }}
+  when: packages_combined | length > 0
+
+- name: No packages to install
+  ansible.builtin.debug:
+    msg: "No packages specified for installation."
+  when: packages_combined | length == 0
+
+- name: Install packages using {{ ansible_pkg_mgr }}
+  ansible.builtin.include_tasks: "{{ ansible_pkg_mgr }}.yml"
+  when: packages_combined | length > 0
