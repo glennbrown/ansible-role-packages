@@ -7,8 +7,11 @@
 
     - name: Install packages
       community.general.pacman:
-        name: "{{ packages_combined }}"
+        name: "{{ item }}"
         state: present
+      loop: "{{ packages_combined }}"
+      loop_control:
+        label: "{{ item }}"
       register: pacman_install_result
 
   rescue:

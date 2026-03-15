@@ -8,8 +8,11 @@
 
     - name: Install packages
       ansible.builtin.apt:
-        name: "{{ packages_combined }}"
+        name: "{{ item }}"
         state: present
+      loop: "{{ packages_combined }}"
+      loop_control:
+        label: "{{ item }}"
       register: apt_install_result
 
   rescue:
